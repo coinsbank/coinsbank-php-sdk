@@ -1,0 +1,4441 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Coinsbank Site API",
+    "description": "Alphabetical list of common-used CoinsBank API methods. Key and signature is obligatory with each request",
+    "version": "0.2"
+  },
+  "host": "coinsbank.com",
+  "schemes": [
+    "https"
+  ],
+  "basePath": "/sapi",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "security": [
+    {
+      "name": "Key",
+      "in": "header",
+      "description": "API key",
+      "required": true,
+      "schema": {
+        "type": "string"
+      }
+    },
+    {
+      "name": "Signature",
+      "in": "header",
+      "description": "Signature generated from request data",
+      "required": true,
+      "schema": {
+        "type": "string"
+      }
+    }
+  ],
+  "responses": {
+    "200": {
+      "description": "Operation was successful"
+    },
+    "401": {
+      "description": "2-factor authentication required",
+      "schema": {
+        "$ref": "#/definitions/AuthenticationRequired"
+      }
+    },
+    "403": {
+      "description": "Authentication error",
+      "schema": {
+        "$ref": "#/definitions/AuthorizationError"
+      }
+    },
+    "404": {
+      "description": "Authentication token not found",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    },
+    "406": {
+      "description": "Data has been changed already",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    },
+    "412": {
+      "description": "Validation error",
+      "schema": {
+        "$ref": "#/definitions/ValidationError"
+      }
+    },
+    "429": {
+      "description": "Too many requests",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    },
+    "500": {
+      "description": "General error",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    }
+  },
+
+  "paths": {
+    "/customer/_{merchantOrderId}": {
+      "get": {
+        "summary": "Get merchant invoice info",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/MerchantOrderDetails"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Pay for invoice with cryptocurrency",
+        "description": "Set params - currency to pay, payee details, etc. Returns crypto address and amount to pay",
+        "parameters": [
+          {
+            "name": "payInCurrency",
+            "in": "body",
+            "description": "Currency to pay for invoice",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "customerFullName",
+            "in": "body",
+            "required": false,
+            "description": "Payee name",
+            "type": "string"
+          },
+          {
+            "name": "customerAddress",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: stree, building, etc",
+            "type": "string"
+          },
+          {
+            "name": "customerCity",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: city",
+            "type": "string"
+          },
+          {
+            "name": "customerCountry",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: country",
+            "type": "string"
+          },
+          {
+            "name": "customerZip",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: postal (ZIP) code",
+            "type": "string"
+          },
+          {
+            "name": "customerRegion",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: region/state",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment params has been set successfully",
+            "schema": {
+              "properties": {
+                "address": {
+                  "type": "string",
+                  "description": "Crypto address to pay"
+                },
+                "currencyfixed": {
+                  "type": "string",
+                  "description": "Currency to pay"
+                },
+                "amountfixed": {
+                  "type": "number",
+                  "description": "Amount in selected currency"
+                },
+                "ttlfixed": {
+                  "type": "number",
+                  "description": "Time to expire exchange rate. After that time, amount to pay could be changed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/transfer/_{merchantOrderId}": {
+      "put": {
+        "summary": "Pay invoice with transfer from CoinsBank account",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "body",
+            "description": "Account UID. Should be owned by or available for current user",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/Transfer"
+            }
+          }
+        }
+      }
+    },
+    "/freeze": {
+      "get": {
+        "description": "Get deposit freezes list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Array of freezes objects",
+            "schema": {
+              "$ref": "#/definitions/Freeze"
+            }
+          }
+        }
+      }
+    },
+    "/head": {
+      "get": {
+        "description": "Get various user details",
+        "deprecated": "true",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Array containing user details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "balance": {
+                  "type": "object",
+                  "description": "Summarized user's balances by currency {currency => amount}"
+                },
+                "baseBalance": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Summarized user's balanced in selected base currency"
+                },
+                "baseCurrency": {
+                  "type": "string",
+                  "description": "User's base currency"
+                },
+                "country_ip": {
+                  "type": "string",
+                  "description": "Country code by IP address"
+                },
+                "currencies": {
+                  "type": "array",
+                  "description": "Currencies list",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "languages": {
+                  "type": "array",
+                  "description": "Languages available",
+                  "items": {
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "description": "Language ID"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Language name"
+                      },
+                      "code": {
+                        "type": "string",
+                        "description": "Language code"
+                      }
+                    }
+                  }
+                },
+                "notifications": {
+                  "type": "integer",
+                  "description": "Unread notifications count"
+                },
+                "operations": {
+                  "type": "integer",
+                  "description": "Operations in progress"
+                },
+                "orders": {
+                  "type": "integer",
+                  "description": "Open trade orders count"
+                },
+                "pairs": {
+                  "type": "array",
+                  "description": "Currency pairs for trading",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "pair_code": {
+                        "type": "string",
+                        "description": "Currency pair name"
+                      },
+                      "base_code": {
+                        "type": "string",
+                        "description": "Currency pair base currency"
+                      },
+                      "quote_code": {
+                        "type": "string",
+                        "description": "Currency pair quoted currency"
+                      },
+                      "lot": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Minimal amount to trade for pair"
+                      },
+                      "rate": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Rate precision for pair"
+                      }
+                    }
+                  }
+                },
+                "profile": {
+                  "type": "object",
+                  "description": "User profile data",
+                  "properties": {
+                    "uid": {
+                      "type": "integer",
+                      "description": "Unique ID"
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Address"
+                    },
+                    "birth_date": {
+                      "type": "string",
+                      "description": "Birth date, YYYY-MM-DD"
+                    },
+                    "blocked": {
+                      "type": "boolean",
+                      "description": "User blocked or not"
+                    },
+                    "city": {
+                      "type": "string",
+                      "description": "City"
+                    },
+                    "country": {
+                      "type": "string",
+                      "description": "Country name"
+                    },
+                    "country_id": {
+                      "type": "string",
+                      "description": "Country ID"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Email"
+                    },
+                    "first_name": {
+                      "type": "string",
+                      "description": "First (given) name"
+                    },
+                    "last_name": {
+                      "type": "string",
+                      "description": "Last (family) name"
+                    },
+                    "language": {
+                      "type": "string",
+                      "description": "Selected language"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Full name"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "description": "Phone number"
+                    },
+                    "postal": {
+                      "type": "string",
+                      "description": "Postal (ZIP) code"
+                    },
+                    "verification_level": {
+                      "type": "integer",
+                      "description": "Verification level"
+                    },
+                    "corporate_verification_level": {
+                      "type": "integer",
+                      "description": "Verification level if corporate user"
+                    }
+                  }
+                },
+                "verification": null,
+                "rates": {
+                  "type": "object",
+                  "description": "Last prices for trade pairs {pair => rate}"
+                },
+                "smsCommission": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Current fee for 2FA codes sent by SMS"
+                },
+                "tickets": {
+                  "type": "integer",
+                  "description": "Open support tickets"
+                },
+                "newsLiner": {
+                  "type": "array",
+                  "description": "News liners data",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "description": "News ID"
+                      },
+                      "text": {
+                        "type": "string",
+                        "description": "News content"
+                      }
+                    }
+                  }
+                },
+                "freeze": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Summarized amount of deposit freezes in base currency"
+                },
+                "corporate": {
+                  "type": "boolean",
+                  "description": "Corporate account or not"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/merchant": {
+      "get": {
+        "summary": "Get merchant invoices list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order, array. For example sort[type]=asc&sort[status]=desc"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters list",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "integer",
+                  "description": "Invoice numerical ID or array"
+                },
+                "uniqueId": {
+                  "type": "string",
+                  "description": "Invoice UID or array"
+                },
+                "amountFrom": {
+                  "type": "number",
+                  "description": "Amount from, decimal"
+                },
+                "amountTo": {
+                  "type": "number",
+                  "description": "Amount to, decimal"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "Currency to get"
+                },
+                "caption": {
+                  "type": "string",
+                  "description": "Invoice caption/name, partial or full string"
+                },
+                "descr": {
+                  "type": "string",
+                  "description": "Invoice description, partial or full string"
+                },
+                "externalid": {
+                  "type": "string",
+                  "description": "Ivoice ID in merchant's system"
+                },
+                "dateValidTo": {
+                  "type": "string",
+                  "description": "Date valid to"
+                },
+                "dateValidFrom": {
+                  "type": "string",
+                  "description": "Date valid from"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Partial or full payee email address"
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Partial or full payee phone number"
+                },
+                "receivecrypto": {
+                  "type": "string",
+                  "description": "Receive crypto as payment or not"
+                },
+                "receivefiat": {
+                  "type": "string",
+                  "description": "Receive fiat as payment or not"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Invoice status"
+                },
+                "dateCreatedTo": {
+                  "type": "string",
+                  "description": "Invoice create date to"
+                },
+                "dateCreatedFrom": {
+                  "type": "string",
+                  "description": "Invoice create date from"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An array with invoice objects",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "An array with invoice objects",
+                  "items": {
+                    "$ref": "#/definitions/MerchantOrder"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create invoice ",
+        "description": "Invoice will be sent automatically with payment link to payee email or phone number",
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "body",
+            "required": true,
+            "description": "Invoice amount",
+            "type": "number"
+          },
+          {
+            "name": "currency",
+            "in": "body",
+            "required": true,
+            "description": "Invoice currency",
+            "type": "string"
+          },
+          {
+            "name": "serviceName",
+            "in": "body",
+            "required": true,
+            "description": "Invoice caption/name",
+            "type": "string"
+          },
+          {
+            "name": "serviceDescription",
+            "in": "body",
+            "required": true,
+            "description": "Invoice description",
+            "type": "string"
+          },
+          {
+            "name": "merchantNumber",
+            "in": "body",
+            "required": true,
+            "description": "Invoice ID in merchant's system",
+            "type": "string"
+          },
+          {
+            "name": "ttl",
+            "in": "body",
+            "required": true,
+            "description": "Invoice expiry in seconds",
+            "type": "integer"
+          },
+          {
+            "name": "buyerEmail",
+            "in": "body",
+            "required": true,
+            "description": "Payee email address",
+            "type": "string"
+          },
+          {
+            "name": "buyerPhone",
+            "in": "body",
+            "required": false,
+            "description": "Payee phone number",
+            "type": "string"
+          },
+          {
+            "name": "acceptCrypto",
+            "in": "body",
+            "required": true,
+            "description": "Accept crypto as payment",
+            "type": "boolean"
+          },
+          {
+            "name": "currencyWish",
+            "in": "body",
+            "required": false,
+            "description": "Currency to get after payment. Will be automatically converted if differs from invoice currency",
+            "type": "string"
+          },
+          {
+            "name": "acceptFiat",
+            "in": "body",
+            "required": true,
+            "description": "Accept fiat as payment",
+            "type": "boolean"
+          },
+          {
+            "name": "customerAddress",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: street, building, etc",
+            "type": "string"
+          },
+          {
+            "name": "customerFullName",
+            "in": "body",
+            "required": false,
+            "description": "Payee full name",
+            "type": "string"
+          },
+          {
+            "name": "customerCity",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: city",
+            "type": "string"
+          },
+          {
+            "name": "customerCountry",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: country",
+            "type": "string"
+          },
+          {
+            "name": "customerZip",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: postal (ZIP) code",
+            "type": "string"
+          },
+          {
+            "name": "customerRegion",
+            "in": "body",
+            "required": false,
+            "description": "Billing address: region/state",
+            "type": "string"
+          },
+          {
+            "name": "commissionType",
+            "in": "body",
+            "required": false,
+            "description": "Include CoinsBank fee to invoice or not",
+            "type": "number",
+            "default": 0,
+            "enum": ["0 - fee will be taken from merchant", "1 - fee will be included to invoice"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice has been created",
+            "schema": {
+              "properties": {
+                "unique_id": {
+                  "type": "string",
+                  "description": "Invoice UID"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/merchant/_{merchantOrderId}": {
+      "delete": {
+        "summary": "Cancel invoice",
+        "description": "Will cancel invoice if possible",
+        "responses": {
+          "200": {
+            "description": []
+          }
+        }
+      },
+      "get": {
+        "summary": "Get invoice object",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/MerchantOrder"
+            }
+          }
+        }
+      }
+    },
+    "/merchant/accept/_{merchantOrderId}": {
+      "put": {
+        "summary": "Force invoice close, accept payment whenever paid partially or not",
+        "parameters": [
+          {
+            "name" : "currencyaccept",
+            "in": "body",
+            "description": "currencyfixed params from invoice details",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice closed"
+          }
+        }
+      }
+    },
+    "/merchant/activate": {
+      "get": {
+        "summary": "Is current user has active merchant service or not",
+        "description": "Merchant service should be activated before first invoice created",
+        "responses": {
+          "200": {
+            "schema": {
+              "properties": {
+                "is_merchant": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Activate merchant service",
+        "description": "Activate merchant service and accept CoinsBank rules and conditions",
+        "responses": {
+          "200": {
+            "description": "Service has been activated successfully"
+          }
+        }
+      }
+    },
+    "/merchant/fee": {
+      "get": {
+        "summary": "Get fee for invoice",
+        "description": "Calculate fee for invoice processing. Fee could be included to invoice or taken from amount paid by invoice",
+        "responses": {
+          "200": {
+            "description": "An object with invoice fee",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/MerchantOrderFees"
+            }
+          }
+        }
+      }
+    },
+
+    "/operation": {
+      "get": {
+        "summary": "Get user operations list",
+        "description": "Operation is a group of transactions. For example, a deposit, withdrawal or card payment, etc. Operations has statuses, transactions hasn't.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Associative array of fields - direction (desc/asc)"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters for operations",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "integer",
+                  "description": "Internal numeric ID"
+                },
+                "operationType": {
+                  "type": "integer",
+                  "description": "Operation type, integet or integers array"
+                },
+                "dateCreateFrom": {
+                  "type": "string",
+                  "description": "Created from, DD.MM.YYYY"
+                },
+                "dateCreateTo": {
+                  "type": "string",
+                  "description": "Created to, DD.MM.YYYY"
+                },
+                "dateUpdateFrom": {
+                  "type": "string",
+                  "description": "Updated from, DD.MM.YYYY"
+                },
+                "dateUpdateTo": {
+                  "type": "string",
+                  "description": "Updated to, DD.MM.YYYY"
+                },
+                "amountFrom": {
+                  "type": "number",
+                  "description": "Amount from"
+                },
+                "amountTo": {
+                  "type": "number",
+                  "description": "Amount to"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "Currency, string or array of strings"
+                },
+                "accountId": {
+                  "type": "string",
+                  "description": "Account UID or array of UIDs"
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "Operation status, integer of integers array"
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "Only operations in progress"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An object with operations info",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "An array with operations",
+                  "items": {
+                    "$ref": "#/definitions/Operation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operation/_{chainId}": {
+      "get": {
+        "summary": "Get operation details",
+        "responses": {
+          "200": {
+            "description": "Object with operation details"
+          }
+        }
+      }
+    },
+    "/operation/wallet/_{walletUniqueId}": {
+      "get": {
+        "description": "Get operations list by account UID",
+        "parameters": [
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Associative array of fields - direction (desc/asc)"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters for operations",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "integer",
+                  "description": "Internal numeric ID"
+                },
+                "operationType": {
+                  "type": "integer",
+                  "description": "Operation type, integet or integers array"
+                },
+                "dateCreateFrom": {
+                  "type": "string",
+                  "description": "Created from, DD.MM.YYYY"
+                },
+                "dateCreateTo": {
+                  "type": "string",
+                  "description": "Created to, DD.MM.YYYY"
+                },
+                "dateUpdateFrom": {
+                  "type": "string",
+                  "description": "Updated from, DD.MM.YYYY"
+                },
+                "dateUpdateTo": {
+                  "type": "string",
+                  "description": "Updated to, DD.MM.YYYY"
+                },
+                "amountFrom": {
+                  "type": "number",
+                  "description": "Amount from"
+                },
+                "amountTo": {
+                  "type": "number",
+                  "description": "Amount to"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "Currency, string or array of strings"
+                },
+                "accountId": {
+                  "type": "string",
+                  "description": "Account UID or array of UIDs"
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "Operation status, integer of integers array"
+                },
+                "isActive": {
+                  "type": "boolean",
+                  "description": "Only operations in progress"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of operation objects",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "An array with operations",
+                  "items": {
+                    "$ref": "#/definitions/Operation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/trade": {
+      "post": {
+        "description": "Create new trade order",
+        "parameters": [
+          {
+            "name": "exchangeRate",
+            "in": "body",
+            "description": "Exchange rate for limit order. Market order if not set.",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "name": "fromUserAccount",
+            "in": "body",
+            "description": "Account UID to get funds",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "toUserAccount",
+            "in": "body",
+            "description": "Account UID to put funds",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "in": "body",
+            "description": "Amount in base currency",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "direction",
+            "in": "body",
+            "description": "Order direction: 'buy' or 'sell' ",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "'buy' - buy pair's base currency",
+              "'sell' - sell pair's base currency"
+            ]
+          },
+          {
+            "name": "stopLoss",
+            "in": "body",
+            "description": "Exchange rate for stop-loss trigger",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "name": "takeProfit",
+            "in": "body",
+            "description": "Exchange rate for take-profit trigger",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "name": "commissionType",
+            "in": "body",
+            "description": "Take trade fee from account",
+            "required": true,
+            "type": "number",
+            "enum": [
+              "0 - account take currency from. Ex., if during the trades user spends USD, fee will be taken in USD",
+              "1 - account get currency to. Ex., if during the trades user acquires BTC, fee will be taken in BTC"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "get": {
+        "description": "Trade orders list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order, array. For example sort[type]=asc&sort[status]=desc"
+          },
+          {
+            "name": "distinct",
+            "in": "query",
+            "description": "only distinct items"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters list for orders",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "integer",
+                  "description": "Order type"
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "Order status, integer or array"
+                },
+                "direction": {
+                  "type": "integer",
+                  "description": "Direction (0 - buy, 1 - sell)",
+                  "enum": [0, 1]
+                },
+                "orderNumber": {
+                  "type": "string",
+                  "description": "Order unique ID"
+                },
+                "triggeredBy": {
+                  "type": "string",
+                  "description": "Triggered by order unique ID. For stop-loss/take-profit"
+                },
+                "exchangeRateFrom": {
+                  "type": "number",
+                  "description": "Exchange rate from"
+                },
+                "exchangeRateTo": {
+                  "type": "number",
+                  "description": "Exchange rate to"
+                },
+                "dateCreateFrom": {
+                  "type": "string",
+                  "description": "Create date from, format DD.MM.YYYY"
+                },
+                "dateCreateTo": {
+                  "type": "string",
+                  "description": "Create date to, format DD.MM.YYYY"
+                },
+                "dateUpdateFrom": {
+                  "type": "string",
+                  "description": "Update date from, format DD.MM.YYYY"
+                },
+                "dateUpdateTo": {
+                  "type": "string",
+                  "description": "Update date to, format DD.MM.YYYY"
+                },
+                "stopLoss": {
+                  "type": "integer",
+                  "description": "Has stop-loss trigger",
+                  "enum": [0, 1]
+                },
+                "takeProfit": {
+                  "type": "integer",
+                  "description": "Has take-profit trigger",
+                  "enum": [0, 1]
+                },
+                "currencyPair": {
+                  "type": "string",
+                  "description": "Currency pair, string or array"
+                },
+                "currencyGet": {
+                  "type": "string",
+                  "description": "Currency to get, string or array"
+                },
+                "currencyPay": {
+                  "type": "string",
+                  "description": "Currency to pay, string or array"
+                },
+                "amountGetFrom": {
+                  "type": "number",
+                  "description": "Amount to get min"
+                },
+                "amountGetTo": {
+                  "type": "number",
+                  "description": "Amount to get max"
+                },
+                "amountPayFrom": {
+                  "type": "number",
+                  "description": "Amount to pay, min"
+                },
+                "amountPayTo": {
+                  "type": "number",
+                  "description": "Amount to pay, max"
+                },
+                "accountIdFrom": {
+                  "type": "string",
+                  "description": "Account UID to pay, string or array"
+                },
+                "accountIdTo": {
+                  "type": "string",
+                  "description": "Account UID to get, string or array"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TradeOrder"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trade/_{tradeOrderId}": {
+      "delete": {
+        "summary": "Cancel trade order",
+        "description": "Cancel trade order if possible",
+        "responses": {
+          "200": {
+            "description": true
+          }
+        }
+      },
+      "get": {
+        "summary": "Get order details",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/TradeOrderDetail"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update order",
+        "description": "Reset order triggers if possible",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "body",
+            "description": "Action to perform",
+            "required": true,
+            "type": "string",
+            "enum": ["resettp", "resetsl", "resetsltp"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/trade/closing/_{tradeOrderId}": {
+      "get": {
+        "description": "Order closing details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TradeOrderHistory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trade/fee": {
+      "get": {
+        "description": "Get estimated trade fee",
+        "parameters": [
+          {
+            "name": "fromUserAccount",
+            "in": "query",
+            "description": "Account UID to pay currency from",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "toUserAccount",
+            "in": "query",
+            "description": "Account UID to get currency",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "description": "Order direction for fee calculations. If sell - by fromUserAccount, buy - toUserAccount",
+            "required": true,
+            "type": "string",
+            "enum": ["buy", "sell"]
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "Amnount to calculate fee by direction",
+            "required": true,
+            "type": "number"
+          },
+          {
+            "name": "exchangeRate",
+            "in": "query",
+            "description": "Exchange rate for limit order. If not set then market order",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "name": "commissionType",
+            "in": "query",
+            "description": "Take fee from currency",
+            "required": true,
+            "type": "number",
+            "enum": ["0 - by fromUserAccount", "1 - by toUserAccount"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fee estimates",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "description": "Fee amount"
+                },
+                "exchrateavg": {
+                  "description": "Average exchange rate"
+                },
+                "comis": {
+                  "description": "Fee"
+                },
+                "amountbase": {
+                  "description": "Fee in pair's base currency"
+                },
+                "amountquote": {
+                  "description": "Fee in pair's quoted currency"
+                },
+                "amount_min": {
+                  "description": "Min amount for order by account balance excl. fee"
+                },
+                "amount_max": {
+                  "description": "Max amount for order by account balance excl. fee"
+                },
+                "bid": {
+                  "description": "Max exchange rate to bid"
+                },
+                "ask": {
+                  "description": "Max exchange rate to ask"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trade/ohlcv": {
+      "get": {
+        "description": "Get OHLCV data",
+        "parameters": [
+          {
+            "name": "pairCode",
+            "in": "query",
+            "description": "Currency pair code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "description": "Interval",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                60,
+                300,
+                600,
+                1800,
+                3600
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "description": "timestamp with microseconds",
+                    "type": "number"
+                  },
+                  "o": {
+                    "description": "Open",
+                    "type": "string"
+                  },
+                  "h": {
+                    "description": "High",
+                    "type": "string"
+                  },
+                  "l": {
+                    "description": "Low",
+                    "type": "string"
+                  },
+                  "c": {
+                    "description": "Close",
+                    "type": "string"
+                  },
+                  "v": {
+                    "description": "Volume",
+                    "type": "string"
+                  },
+                  "dt": {
+                    "description": "Date",
+                    "type": "string"
+                  },
+                  "vq": {
+                    "description": "Quoted currency amount",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trade/simple": {
+      "post": {
+        "description": "Exchange currencies by market",
+        "parameters": [
+          {
+            "name": "TradeSimpleParams",
+            "in": "body",
+            "description": "Params",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["amount", "fromAccount", "toAccount", "type"],
+              "properties": {
+                "amount": {
+                  "description": "Amount",
+                  "type": "number",
+                  "format": "double"
+                },
+                "fromAccount": {
+                  "description": "Account UID to pay currency from",
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "toAccount": {
+                  "description": "Account UID to pay currency from",
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "direction": {
+                  "description": "Direction (0 - buy, 1 - sell)",
+                  "type": "integer",
+                  "enum": [0, 1]
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/trade/simple/fee": {
+      "get": {
+        "description": "Estimate trade fee for currency exchange",
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "Amount",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "fromAccount",
+            "in": "query",
+            "description": "Account UID to pay currency from",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "toAccount",
+            "in": "query",
+            "description": "Account UID to pay currency from",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "description": "Direction (0 - buy, 1 - sell)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "enum": [0, 1]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fee estimate",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Amount excl. fee"
+                },
+                "rate": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Average exchange rate"
+                },
+                "commission": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Trade fee"
+                },
+                "maxAmount": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Max amount to change"
+                },
+                "minAmount": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Min amount to change"
+                },
+                "bid": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Rate for bid"
+                },
+                "ask": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Rate for ask"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/transaction": {
+      "get": {
+        "summary": "Get transactions list",
+        "description": "Get transactions list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order, array. For example sort[type]=asc&sort[status]=desc"
+          },
+          {
+            "name": "distinct",
+            "in": "query",
+            "description": "only distinct items"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters list",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accountId": {
+                  "type": "string",
+                  "description": "Account UID"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "Currency, string or array"
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "Transaction status, integer or array"
+                },
+                "dateCreateFrom": {
+                  "type": "string",
+                  "description": "Create date from, format DD.MM.YYYY"
+                },
+                "dateCreateTo": {
+                  "type": "string",
+                  "description": "Create date to, format DD.MM.YYYY"
+                },
+                "amountFrom": {
+                  "type": "number",
+                  "description": "Amount min"
+                },
+                "amountTo": {
+                  "type": "number",
+                  "description": "Amount max"
+                },
+                "cardId": {
+                  "type": "integer",
+                  "description": "Card UID, string or array"
+                },
+                "transactionType": {
+                  "type": "integer",
+                  "description": "Transaction type, integer or array"
+                },
+                "transactionTypeGroup": {
+                  "type": "integer",
+                  "description": "Type group, integer or array"
+                },
+                "direction": {
+                  "type": "integer",
+                  "description": "Direction",
+                  "enum": ["0 - pay", "1 - get"]
+                },
+                "card": {
+                  "type": "boolean",
+                  "description": "Card transaction or not"
+                },
+                "initialBalanceFrom": {
+                  "type": "number",
+                  "description": "Initial balance min (before transaction)"
+                },
+                "initialBalancetTo": {
+                  "type": "number",
+                  "description": "Initial balance max (before transaction)"
+                },
+                "remainingBalanceFrom": {
+                  "type": "number",
+                  "description": "Remained balance min (after transaction)"
+                },
+                "remainingBalanceTo": {
+                  "type": "number",
+                  "description": "Remained balance max (after transaction)"
+                },
+                "cardUniqueId": {
+                  "type": "string",
+                  "description": "Card UID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An array with transactions details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "An array with transactions",
+                  "items": {
+                    "$ref": "#/definitions/Transaction"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction/card/_{cardUniqueId}": {
+      "get": {
+        "summary": "Get all transactions by card",
+        "description": "Get all card transactions list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order, array. For example sort[type]=asc&sort[status]=desc"
+          },
+          {
+            "name": "distinct",
+            "in": "query",
+            "description": "only distinct items"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters list",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accountId": {
+                  "type": "string",
+                  "description": "Account UID"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "Currency, string or array "
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "Status, integer or array"
+                },
+                "dateCreateFrom": {
+                  "type": "string",
+                  "description": "Create date from, format DD.MM.YYYY"
+                },
+                "dateCreateTo": {
+                  "type": "string",
+                  "description": "Create date to, format DD.MM.YYYY"
+                },
+                "amountFrom": {
+                  "type": "number",
+                  "description": "Amount min"
+                },
+                "amountTo": {
+                  "type": "number",
+                  "description": "Amount max"
+                },
+                "transactionType": {
+                  "type": "integer",
+                  "description": "Transaction type, integer or array"
+                },
+                "transactionTypeGroup": {
+                  "type": "integer",
+                  "description": "Type group, integer or array"
+                },
+                "direction": {
+                  "type": "integer",
+                  "description": "Direction",
+                  "enum": ["0 - pay", "1 - get"]
+                },
+                "card": {
+                  "type": "boolean",
+                  "description": "Card transaction or not"
+                },
+                "initialBalanceFrom": {
+                  "type": "number",
+                  "description": "Initial balance min (before transaction)"
+                },
+                "initialBalancetTo": {
+                  "type": "number",
+                  "description": "Initial balance max (before transaction)"
+                },
+                "remainingBalanceFrom": {
+                  "type": "number",
+                  "description": "Remained balance min (after transaction)"
+                },
+                "remainingBalanceTo": {
+                  "type": "number",
+                  "description": "Remained balance max (after transaction)"
+                },
+                "cardUniqueId": {
+                  "type": "string",
+                  "description": "Card UID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An array with transactions details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "An array with transactions",
+                  "items": {
+                    "$ref": "#/definitions/Transaction"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction/wallet/_{walletUniqueId}": {
+      "get": {
+        "summary": "Get all transactions by account",
+        "description": "Get all transactions",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items by page",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "enum": [50,100]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order, array. For example sort[type]=asc&sort[status]=desc"
+          },
+          {
+            "name": "distinct",
+            "in": "query",
+            "description": "only distinct items"
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filters list",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "description": "Currency, string or array "
+                },
+                "status": {
+                  "type": "integer",
+                  "description": "Status, integer or array"
+                },
+                "dateCreateFrom": {
+                  "type": "string",
+                  "description": "Create date from, format DD.MM.YYYY"
+                },
+                "dateCreateTo": {
+                  "type": "string",
+                  "description": "Create date to, format DD.MM.YYYY"
+                },
+                "amountFrom": {
+                  "type": "number",
+                  "description": "Amount min"
+                },
+                "amountTo": {
+                  "type": "number",
+                  "description": "Amount max"
+                },
+                "transactionType": {
+                  "type": "integer",
+                  "description": "Transaction type, integer or array"
+                },
+                "transactionTypeGroup": {
+                  "type": "integer",
+                  "description": "Type group, integer or array"
+                },
+                "direction": {
+                  "type": "integer",
+                  "description": "Direction",
+                  "enum": ["0 - pay", "1 - get"]
+                },
+                "card": {
+                  "type": "boolean",
+                  "description": "Card transaction or not"
+                },
+                "initialBalanceFrom": {
+                  "type": "number",
+                  "description": "Initial balance min (before transaction)"
+                },
+                "initialBalancetTo": {
+                  "type": "number",
+                  "description": "Initial balance max (before transaction)"
+                },
+                "remainingBalanceFrom": {
+                  "type": "number",
+                  "description": "Remained balance min (after transaction)"
+                },
+                "remainingBalanceTo": {
+                  "type": "number",
+                  "description": "Remained balance max (after transaction)"
+                },
+                "cardUniqueId": {
+                  "type": "string",
+                  "description": "Card UID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An array with transactions details",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "integer"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "An array with transactions",
+                  "items": {
+                    "$ref": "#/definitions/Transaction"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/user/profile": {
+      "get": {
+        "description": "Get user details",
+        "parameters": [
+        ],
+        "responses": {
+          "200": {
+            "description": "Array with user details",
+            "schema": {
+              "$ref": "#/definitions/Profile"
+            }
+          }
+        }
+      }
+    },
+    "/user/profile/currency": {
+      "put": {
+        "description": "Set user base currency",
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "body",
+            "description": "Base curency",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+
+    "/wallet": {
+      "get": {
+        "summary": "Get accounts info list",
+        "description": "Get various accounts information.\n",
+        "responses": {
+          "200": {
+            "description": "An object with accounts info",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "totals": {
+                  "type": "array",
+                  "description": "Totals on accounts",
+                  "items": {
+                    "type": "object",
+                    "description": "Total balance in main currency, total on hold, total available.",
+                    "properties": {
+                      "total": {
+                        "type": "number",
+                        "description": "Total on account"
+                      },
+                      "available": {
+                        "type": "number",
+                        "description": "Available on account"
+                      }
+                    }
+                  }
+                },
+                "wallets": {
+                  "type": "array",
+                  "description": "An array with accounts parameters",
+                  "items": {
+                    "$ref": "#/definitions/WalletAll"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create account",
+        "description": "Create new account",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "description": "Account name",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "currency",
+            "in": "body",
+            "description": "Currency",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "multiSign",
+            "in": "body",
+            "description": "For future usage",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account object",
+            "schema": {
+              "$ref": "#/definitions/Wallet"
+            }
+          }
+        }
+      }
+    },
+    "/wallet/_{wallet-unique-id}": {
+      "get": {
+        "summary": "Get account info",
+        "description": "Get various account information.",
+        "responses": {
+          "200": {
+            "description": "Account",
+            "schema": {
+              "$ref": "#/definitions/Wallet"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Set account name",
+        "description": "Set new account name",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "description": "Account name",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account object",
+            "schema": {
+              "$ref": "#/definitions/Wallet"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete account",
+        "description": "Delete account if possible. Balance should be zero",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+
+    "/wallet/deposit": {
+      "post": {
+        "summary": "Create deposit",
+        "description": "Create deposit",
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "body",
+            "description": "Amount of deposit",
+            "required": true,
+            "schema": {
+              "type": "float"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "body",
+            "description": "Currency",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "body",
+            "description": "Account Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "address",
+            "in": "body",
+            "description": "Phone number for QIWI",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paymentSystem",
+            "in": "body",
+            "description": "Payment system 3-letters code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastName",
+            "in": "body",
+            "description": "Last name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "firstName",
+            "in": "body",
+            "description": "First name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "countryId",
+            "in": "body",
+            "description": "Country Id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "body",
+            "description": "E-mail",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Create deposit",
+            "schema": {
+              "$ref": "#/definitions/Deposit"
+            }
+          }
+        }
+      }
+    },
+    "/wallet/deposit/_{deposit_unique_id}": {
+      "get": {
+        "summary": "Get deposit",
+        "description": "Get deposit information.\n",
+        "responses": {
+          "200": {
+            "description": "An object with deposit info",
+            "schema": {
+              "$ref": "#/definitions/Deposit"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel deposit",
+        "parameters": null,
+        "description": "Cancel deposit if applicable",
+        "responses": {
+          "200": {
+            "description": true
+          }
+        }
+      }
+    },
+    "/wallet/deposit/available/_{walletUniqueId}": {
+      "get": {
+        "summary": "Get available deposit methods for user, country and account",
+        "description": "Get available deposit methods for user & country",
+        "responses": {
+          "200": {
+            "description": "An object with deposits info",
+            "schema": {
+              "$ref": "#/definitions/Limits"
+            }
+          }
+        }
+      }
+    },
+    "/wallet/deposit/fee": {
+      "get": {
+        "summary": "Get deposit fees",
+        "description": "Get deposit fees | For example currency=USD&amount=100&ps_code=WRT",
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "type": "float",
+            "required": true
+          },
+          {
+            "name": "ps_code",
+            "description": "Wire transfer - WRT, Crypto Wallet - CRP, SEPA - SEP, Perfect Money - PMO, QIWI - QWI, OKPay - OKP",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "enum": ["WRT", "CRP", "SEP", "PMO", "QWI", "OKP"]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An object with deposit fees",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/DepositFees"
+            }
+          }
+        }
+      }
+    },
+
+    "/wallet/transfer": {
+      "post": {
+        "summary": "Create internal transfer",
+        "description": "Create transfer between owned accounts or to another CoinsBank customer",
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "body",
+            "type": "float",
+            "description": "Amount of transfer",
+            "required": true
+          },
+          {
+            "name": "accountId",
+            "in": "body",
+            "description": "Account UID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "address",
+            "in": "body",
+            "description": "Transfer destination. Could by another customer UID, email address or phone number",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "direction",
+            "in": "body",
+            "description": "Type of transfer: 1 - to another customer, 0 - to owned account",
+            "required": true
+          },
+          {
+            "name": "comment",
+            "in": "body",
+            "description": "comment",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer details",
+            "schema": {
+              "$ref": "#/definitions/Transfer"
+            }
+          }
+        }
+      }
+    },
+    "/wallet/transfer/_{transfer_unique_id}": {
+      "delete": {
+        "summary": "Cancel transfer",
+        "description": "Cancel transfer if applicable",
+        "parameters": [
+          {
+            "name": "Transfer",
+            "in": "query",
+            "description": "Transfer Unique ID",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer cancelled"
+          }
+        }
+      }
+    },
+
+    "/wallet/withdrawal": {
+      "post": {
+        "summary": "Create withdrawal",
+        "description": "Create withdrawal\n",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "body",
+            "description": "Account UID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "paymentSystem",
+            "in": "body",
+            "description": "Payment system. CRP, PPL, WRT, SEP, PMO, QWI, OKP, WMY",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "in": "body",
+            "description": "Withdrawal amount",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "currency",
+            "in": "body",
+            "description": "Withdrawal currency",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "address",
+            "in": "body",
+            "description": "Crypto-address for withdrawal",
+            "required": "true if crypto",
+            "type": "string"
+          },
+          {
+            "name": "comment",
+            "in": "body",
+            "description": "Comment",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "beneficiaryName",
+            "in": "body",
+            "description": "Beneficiary name",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "beneficiaryAddress",
+            "in": "body",
+            "description": "Beneficiary address",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "iban",
+            "in": "body",
+            "description": "Account Number/IBAN",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "swift",
+            "in": "body",
+            "description": "SWIFT/ABA",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "bankName",
+            "in": "body",
+            "description": "Name of the Bank",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "bankAddress",
+            "in": "body",
+            "description": "Bank Address",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "bankABA",
+            "in": "body",
+            "description": "Bank ABA",
+            "required": "true for bank",
+            "type": "string"
+          },
+          {
+            "name": "beneficiaryCity",
+            "in": "body",
+            "description": "City",
+            "required": "true for WU",
+            "type": "string"
+          },
+          {
+            "name": "beneficiaryCountry",
+            "in": "body",
+            "description": "Country",
+            "required": "true for WU",
+            "type": "string"
+          },
+          {
+            "name": "cardNumber",
+            "in": "body",
+            "description": "card number",
+            "required": "true for Credit card",
+            "type": "string"
+          },
+          {
+            "name": "expirationDate",
+            "in": "body",
+            "description": "expiration date",
+            "required": "true for Credit Card",
+            "type": "string"
+          },
+          {
+            "name": "urgent",
+            "in": "body",
+            "description": "Urgent for extra fee",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdrawal details",
+            "schema": {
+              "$ref": "#/definitions/Withdrawal"
+            }
+          }
+        }
+      }
+    },
+
+    "/wallet/withdrawal/_{withdrawal_unique_id}": {
+      "delete": {
+        "description": "Cancel withdrawal if applicable",
+        "parameters": [
+          {
+            "name": "withdrawal_unique_id",
+            "in": "path",
+            "description": "Withdrawal UID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdrawal cancelled"
+          }
+        }
+      }
+    },
+    "/wallet/withdrawal/available": {
+      "get": {
+        "summary": "Get available withdrawal methods for user & country",
+        "description": "Get available withdrawal methods for user & country",
+        "responses": {
+          "200": {
+            "description": "An object with withdrawals info",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Limits"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wallet/withdrawal/fee": {
+      "get": {
+        "summary": "Get withdrawal fee",
+        "description": "Get withdrawal fee currency=USD&amount=100&urgent=1&ps_code=WRT",
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "type": "float",
+            "required": true
+          },
+          {
+            "name": "urgent",
+            "in": "query",
+            "type": "integer",
+            "required": false
+          },
+          {
+            "name": "paymentSystem",
+            "description": "Wire transfer - WRT, PayPal - PPL, Crypto Wallet - CRP, SEPA - SEP, Perfect Money - PMO, OKPay - OKP",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "enum": ["CBI", "CBE", "WRT", "PPL", "CRP", "SEP", "PMO", "OKP", "WMY"]
+          },
+          {
+            "name": "address",
+            "description": "Withdrawal destination account or address",
+            "in": "query",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An object with withdrawal fees",
+            "schema": {
+              "type": "object",
+              "$ref": "#/definitions/WithdrawalFees"
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "accountData": {
+      "properties": {
+        "unique_id": {
+          "type": "string",
+          "description": "unique id"
+        },
+        "currency": {
+          "type": "string",
+          "description": "currency"
+        },
+        "min": {
+          "type": "number",
+          "description": "min"
+        },
+        "max": {
+          "type": "number",
+          "description": "max"
+        },
+        "wallet_name": {
+          "type": "string",
+          "description": "account name"
+        },
+        "balance": {
+          "type": "number",
+          "description": "balance"
+        },
+        "blocked": {
+          "type": "integer",
+          "description": "blocked"
+        },
+        "label": {
+          "type": "string",
+          "description": "label"
+        },
+        "name": {
+          "type": "string",
+          "description": "name"
+        }
+      }
+    },
+    "AuthorizationError": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Negative error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error description"
+        }
+      }
+    },
+    "AuthenticationRequired": {
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Auth toket, TTL 5 mins"
+        },
+        "gaEnable": {
+          "type": "boolean",
+          "description": "GoogleAuthentication enabled or not"
+        },
+        "voip": {
+          "type": "boolean",
+          "description": "Request for call allowed or not"
+        },
+        "sms": {
+          "type": "boolean",
+          "description": "Request for SMS allowed or not"
+        }
+      }
+    },
+    "Deposit": {
+      "properties": {
+        "unique_id": {
+          "type": "string",
+          "description": "Unique ID"
+        },
+        "time_create": {
+          "type": "integer",
+          "description": "Create date and time"
+        },
+        "currency": {
+          "type": "integer",
+          "description": "Currency"
+        },
+        "pscode": {
+          "type": "string",
+          "description": "Payment system code"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount"
+        },
+        "confirmations": {
+          "type": "integer",
+          "description": "Confirmations for crypto deposits"
+        },
+        "min_confirmations": {
+          "type": "integer",
+          "description": "Min confirmations count for crypto deposits"
+        },
+        "crypto_txid": {
+          "type": "string",
+          "description": "Crypto tx ID"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Status"
+        },
+        "params": {
+          "type": "object",
+          "description": "Params for some types of deposits",
+          "properties": {
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "countryId": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          }
+        },
+        "beneficiary_name": {
+          "type": "string",
+          "description": "Beneficiary name"
+        },
+        "iban": {
+          "type": "string"
+        },
+        "swift": {
+          "type": "string"
+        },
+        "bank_name": {
+          "type": "string"
+        },
+        "card_number": {
+          "type": "string"
+        },
+        "comission": {
+          "type": "number",
+          "description": "Deposit fee"
+        },
+        "payment_details": {
+          "type": "object",
+          "description": "Payment details"
+        },
+        "wallet_name": {
+          "type": "string",
+          "description": "Account name"
+        },
+        "wallet_id": {
+          "type": "string",
+          "description": "Account UID"
+        },
+        "idchain": {
+          "type": "number",
+          "description": "Internal ID"
+        },
+        "verification_attempts_left": {
+          "type": "number",
+          "description": "Security code confirmations attempts left"
+        },
+        "action": {
+          "type": "object",
+          "description": "Deposit actions"
+        }
+      }
+    },
+    "DepositFees": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Deposit amount inc. fee"
+        },
+        "commission": {
+          "type": "number",
+          "description": "Fee amount"
+        },
+        "percent": {
+          "type": "number",
+          "description": "Variable fee (percent from original amount)"
+        },
+        "fixed": {
+          "type": "number",
+          "description": "Fixed fee"
+        }
+      }
+    },
+    "Error": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Negative error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error description"
+        }
+      }
+    },
+
+    "Freeze": {
+      "properties": {
+        "id": {
+          "description": "Freeze UID",
+          "type": "integer"
+        },
+        "currency": {
+          "description": "Currency",
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double",
+          "description": "Freeze amount"
+        },
+        "amountDeposit": {
+          "type": "number",
+          "format": "double",
+          "description": "Deposit amount"
+        },
+        "validToDate": {
+          "type": "string",
+          "description": "Freeze expiry date"
+        },
+        "createDate": {
+          "type": "string",
+          "description": "Freeze create date"
+        },
+        "paymentSystem": {
+          "type": "string",
+          "description": "Payment system code"
+        }
+      }
+    },
+
+    "Limits": {
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "description": "Limits object",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unique_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Account UID"
+              },
+              "currency": {
+                "type": "string",
+                "description": "Currency"
+              },
+              "min": {
+                "type": "number",
+                "description": "Minimum amount for account"
+              },
+              "max": {
+                "type": "number",
+                "description": "Maximum amount for account"
+              },
+              "typecurrency": {
+                "type": "integer",
+                "description": "0 - cryptocurrency, 1 - fiat currency",
+                "enum": [0, 1]
+              },
+              "wallet_name": {
+                "type": "string",
+                "description": "Account name"
+              },
+              "balance": {
+                "type": "number",
+                "description": "Account balance"
+              },
+              "blocked": {
+                "type": "integer",
+                "description": "Account is blocked"
+              },
+              "hold": {
+                "type": "integer",
+                "description": "Account hold"
+              },
+              "comis": {
+                "type": "string",
+                "description": "Fee"
+              },
+              "multisign": {
+                "type": "boolean",
+                "description": "Account multisignature"
+              }
+            }
+          }
+        },
+        "limits": {
+          "type": "array",
+          "description": null,
+          "items": {
+            "type": "object",
+            "properties": {
+              "pscode": {
+                "type": "string",
+                "description": "Payment system code"
+              },
+              "pscaption": {
+                "type": "string",
+                "description": "Payment system name"
+              },
+              "currency": {
+                "type": "string",
+                "description": "Currency"
+              },
+              "min": {
+                "type": "number",
+                "description": "Minimum amount for payment system"
+              },
+              "max": {
+                "type": "number",
+                "description": "Maximum amount for payment system"
+              },
+              "operation": {
+                "type": "boolean"
+              },
+              "typecurrency": {
+                "type": "integer",
+                "description": "0 - cryptocurrency, 1 - fiat currency",
+                "enum": [0, 1]
+              },
+              "depositpriority": {
+                "type": "number"
+              },
+              "withdrawalpriority": {
+                "type": "number",
+                "description": "Priority in list"
+              },
+              "reasondisable": {
+                "type": "string",
+                "description": "Reason if system not allowed"
+              },
+              "comis": {
+                "type": "number",
+                "description": "Fee"
+              },
+              "available": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "MerchantOrder": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency"
+        },
+        "caption": {
+          "type": "string",
+          "description": "Invoice name"
+        },
+        "descr": {
+          "type": "string",
+          "description": "Invoice description"
+        },
+        "externalid": {
+          "type": "string",
+          "description": "Invoice ID in merchant's system"
+        },
+        "validto": {
+          "type": "string",
+          "description": "Valid until"
+        },
+        "ttl": {
+          "type": "number",
+          "description": "Expiry time in seconds"
+        },
+        "email": {
+          "type": "string",
+          "description": "Customer (payee) email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Customer (payee) phone number"
+        },
+        "currencywish": {
+          "type": "string",
+          "description": "Curency to receive to merchant's account"
+        },
+        "status": {
+          "type": "string",
+          "description": "Invoice status"
+        },
+        "created": {
+          "type": "string",
+          "description": "Create date"
+        },
+        "viewed": {
+          "type": "string",
+          "description": "Viewed by customer (payee) date"
+        },
+        "started": {
+          "type": "string",
+          "description": "Date when payment has been started (tx seen in blockchain if cryptocurrency)"
+        },
+        "finished": {
+          "type": "string",
+          "description": "Date when payment has been received"
+        },
+        "closed": {
+          "type": "string",
+          "description": "Close date"
+        },
+        "cancelled": {
+          "type": "string",
+          "description": "Cancellation date"
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "Unique ID"
+        },
+        "customeraddress": {
+          "type": "string",
+          "description": "Customer (payee) address: street, building number"
+        },
+        "customerfullname": {
+          "type": "string",
+          "description": "Customer (payee) full name"
+        },
+        "customercity": {
+          "type": "string",
+          "description": "Customer (payee) address: city"
+        },
+        "customercountry": {
+          "type": "string",
+          "description": "Customer (payee) address: country"
+        },
+        "customerzip": {
+          "type": "string",
+          "description": "Customer (payee) address: postal code"
+        },
+        "customerregion": {
+          "type": "string",
+          "description": "Customer (payee) address: region/state"
+        },
+        "currencyfixed": {
+          "type": "string",
+          "description": "Currency to pay for invoice (fixed)"
+        },
+        "amountfixed": {
+          "type": "number",
+          "description": "Amount in selected currency (fixed)"
+        },
+        "ttlfixed": {
+          "type": "number",
+          "description": "Time to expire exchange rate and fixed amount for payment in cryptocurrency"
+        },
+        "amountpaid": {
+          "type": "number",
+          "description": "Amount paid"
+        },
+        "commissionType": {
+          "description": "Fee type",
+          "type": "number",
+          "default": 0,
+          "enum": ["0 - fee excluded from invoice amount", "1 - fee included to invoice amount"]
+        },
+        "total": {
+          "type": "number",
+          "description": "Invoice amount as shown to customer (payee)"
+        }
+      }
+    },
+    "MerchantOrderDetails": {
+      "properties": {
+        "idchain": {
+          "type": "integer",
+          "description": "Internal ID"
+        },
+        "user_id": {
+          "type": "integer",
+          "description": "User UID"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency"
+        },
+        "caption": {
+          "type": "string",
+          "description": "Invoice name"
+        },
+        "descr": {
+          "type": "string",
+          "description": "Invoice description"
+        },
+        "externalid": {
+          "type": "string",
+          "description": "Invoice ID in merchant's system"
+        },
+        "validto": {
+          "type": "string",
+          "description": "Valid until"
+        },
+        "ttl": {
+          "type": "number",
+          "description": "Expiry time in seconds"
+        },
+        "email": {
+          "type": "string",
+          "description": "Customer (payee) email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Customer (payee) phone number"
+        },
+        "currencywish": {
+          "type": "string",
+          "description": "Curency to receive to merchant's account"
+        },
+        "status": {
+          "type": "string",
+          "description": "Invoice status"
+        },
+        "created": {
+          "type": "string",
+          "description": "Create date"
+        },
+        "viewed": {
+          "type": "string",
+          "description": "Viewed by customer (payee) date"
+        },
+        "started": {
+          "type": "string",
+          "description": "Date when payment has been started (tx seen in blockchain if cryptocurrency)"
+        },
+        "finished": {
+          "type": "string",
+          "description": "Date when payment has been received"
+        },
+        "closed": {
+          "type": "string",
+          "description": "Close date"
+        },
+        "cancelled": {
+          "type": "string",
+          "description": "Cancellation date"
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "Unique ID"
+        },
+        "customeraddress": {
+          "type": "string",
+          "description": "Customer (payee) address: street, building number"
+        },
+        "customerfullname": {
+          "type": "string",
+          "description": "Customer (payee) full name"
+        },
+        "customercity": {
+          "type": "string",
+          "description": "Customer (payee) address: city"
+        },
+        "customercountry": {
+          "type": "string",
+          "description": "Customer (payee) address: country"
+        },
+        "customerzip": {
+          "type": "string",
+          "description": "Customer (payee) address: postal code"
+        },
+        "customerregion": {
+          "type": "string",
+          "description": "Customer (payee) address: region/state"
+        },
+        "currencyfixed": {
+          "type": "string",
+          "description": "Currency to pay for invoice (fixed)"
+        },
+        "amountfixed": {
+          "type": "number",
+          "description": "Amount in selected currency (fixed)"
+        },
+        "ttlfixed": {
+          "type": "number",
+          "description": "Time to expire exchange rate and fixed amount for payment in cryptocurrency"
+        },
+        "deposit": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time_create": {
+                "type": "string",
+                "description": "Create date"
+              },
+              "currency": {
+                "type": "string",
+                "description": "Currency"
+              },
+              "txid": {
+                "type": "string",
+                "description": "Crypto tx ID"
+              },
+              "confirmations": {
+                "type": "integer",
+                "description": "Confirmations count"
+              },
+              "min_confirmations": {
+                "type": "integer",
+                "description": "Min confirmations count"
+              },
+              "amount": {
+                "type": "number",
+                "description": "Deposit amount"
+              }
+            }
+          }
+        },
+        "address": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "description": "Currency"
+              },
+              "cryptoaddress": {
+                "type": "string",
+                "description": "Cryptoaddress for payment"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "Operation": {
+      "properties": {
+        "idchain": {
+          "type": "integer",
+          "description": "Internal ID"
+        },
+        "idtype": {
+          "type": "integer",
+          "description": "Operation type"
+        },
+        "created": {
+          "type": "string",
+          "description": "Create date, format DD.MM.YYYY"
+        },
+        "updated": {
+          "type": "string",
+          "description": "Update date, format DD.MM.YYYY"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount"
+        },
+        "amount_sign": {
+          "type": "number",
+          "description": "Signed amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency"
+        },
+        "wallet_unique_id": {
+          "type": "string",
+          "description": "Account UID"
+        },
+        "walletname": {
+          "type": "string",
+          "description": "Account name"
+        },
+        "operation_details": {
+          "type": "string",
+          "description": "Operation details"
+        },
+        "status": {
+          "type": "number",
+          "description": "Operation common status"
+        },
+        "isactive": {
+          "type": "boolean",
+          "description": "Is operation active (in progess) or not"
+        }
+      }
+    },
+    "OperationsFilter": {
+      "properties": {
+        "property1": {
+          "type": "string",
+          "description": "Standard filter"
+        }
+      }
+    },
+    "Profile": {
+      "properties": {
+        "baseCurrency": {
+          "type": "string",
+          "description": "User-selected base currency"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email",
+          "format": "email",
+          "minLength": 6,
+          "maxLength": 12
+        },
+        "id": {
+          "type": "integer",
+          "description": "User UID",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "description": "User full name"
+        },
+        "notificationTimeZone": {
+          "type": "string",
+          "description": "ISO timezone, for example 'Europe/Amsterdam'"
+        },
+        "phone": {
+          "type": "integer",
+          "format": "phone",
+          "description": "Phone number"
+        },
+        "recoveryType": {
+          "type": "integer",
+          "description": "Recovery method (1 - sms, 2 - email)",
+          "enum": [1, 2, null]
+        },
+        "recoveryValue": {
+          "type": "string",
+          "description": "Email or phone number for recovery"
+        },
+        "sleepMode": {
+          "description": "Is sleep mode active or not. When sleep mode active, no notifications will come to user's devices",
+          "type": "boolean"
+        },
+        "sleepModeFrom": {
+          "type": "string",
+          "description": "Sleep mode time start, format HH:MM"
+        },
+        "sleepModeTo": {
+          "type": "string",
+          "description": "Sleep mode time end, format HH:MM"
+        },
+        "tfaMode": {
+          "type": "string",
+          "description": "2FA mode",
+          "enum": ["sms", "ga"]
+        },
+        "verificationLevel": {
+          "type": "integer",
+          "description": "Verification level"
+        }
+      }
+    },
+
+    "TemporaryFileParams": {
+      "properties": {
+        "deleteType": {
+          "type": "string",
+          "description": "Request type, always DELETE",
+          "enum": ["DELETE"]
+        },
+        "deleteUrl": {
+          "type": "string",
+          "description": "Relative link to delete file"
+        },
+        "filename": {
+          "type": "string",
+          "description": "Internal filename with extension"
+        },
+        "key": {
+          "type": "string",
+          "description": "File key"
+        },
+        "name": {
+          "type": "string",
+          "description": "Original filename with extension"
+        },
+        "size": {
+          "type": "string",
+          "description": "Filesize in bytes"
+        },
+        "type": {
+          "type": "string",
+          "description": "File MIME type"
+        },
+        "url": {
+          "type": "string",
+          "description": "Relative link to view temp file"
+        }
+      }
+    },
+
+    "TradeFee": {
+      "properties": {
+        "commissionAmount": {
+          "type": "number",
+          "format": "double",
+          "description": "Fee amount"
+        },
+        "commissionPercent": {
+          "type": "number",
+          "format": "double",
+          "description": "Fee in percent"
+        },
+        "direction": {
+          "type": "integer",
+          "description": "Direction for base pair curency (0 - buy base currency, 1 - sell base currency)",
+          "enum": [0, 1]
+        },
+        "exchangeRate": {
+          "type": "number",
+          "format": "double",
+          "description": "Exchange rate"
+        },
+        "fromUserAccount": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account UID to pay from"
+        },
+        "get": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount to get"
+        },
+        "pay": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount to pay"
+        },
+        "payAll": {
+          "type": "integer",
+          "description": "Pay all available amount (0 - don't pay, 1 - pay all)",
+          "enum": [0, 1]
+        },
+        "rateDeviation": {
+          "type": "integer",
+          "description": "1, if deviation from average exchange rate more than 30%, otherwise null",
+          "enum": [1, null]
+        },
+        "stopLoss": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount for stop loss trigger"
+        },
+        "takeProfit": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount for take profit trigger"
+        },
+        "total": {
+          "type": "number",
+          "format": "double",
+          "description": "Total amount"
+        },
+        "totalGet": {
+          "type": "number",
+          "format": "double",
+          "description": "Total amount to get"
+        },
+        "toUserAccount": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account UID to get funds"
+        },
+        "type": {
+          "type": "integer",
+          "description": "Order type (0 - market, 2 - limit)",
+          "default": 2,
+          "enum": [0, 2]
+        }
+      }
+    },
+    "TradeOrder": {
+      "properties": {
+        "type": {
+          "type": "integer",
+          "description": "Order type (0 - market, 2 - limit)"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Order status (0 - initial, 1 - open, 2 - closed, 3 - cancelled, 5 - waiting for Take Profit rate, 6 - waiting for Stop Loss rate)"
+        },
+        "direction": {
+          "type": "boolean",
+          "description": "Direction for base pair curency (0 - buy base currency, 1 - sell base currency)",
+          "enum": [0, 1]
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "Order UID"
+        },
+        "exchrate": {
+          "type": "number",
+          "description": "Exchange rate"
+        },
+        "exchrateclose": {
+          "type": "string",
+          "description": "Average close exchange rate"
+        },
+        "exchratemin": {
+          "type": "number",
+          "description": "Min exchange rate for order"
+        },
+        "exchratemax": {
+          "type": "number",
+          "description": "Max exchage rate for order"
+        },
+        "time_create": {
+          "type": "string",
+          "description": "Create date and time"
+        },
+        "time_update": {
+          "type": "string",
+          "description": "Update date and time"
+        },
+        "sl": {
+          "type": "number",
+          "description": "Stop loss rate"
+        },
+        "tp": {
+          "type": "number",
+          "description": "Take profit rate"
+        },
+        "code": {
+          "type": "string",
+          "description": "Currency pair code"
+        },
+        "codeget": {
+          "type": "string",
+          "description": "Currency to get"
+        },
+        "codepay": {
+          "type": "string",
+          "description": "Currency to pay"
+        },
+        "get": {
+          "type": "number",
+          "description": "Amount to get"
+        },
+        "pay": {
+          "type": "number",
+          "description": "Amount to pay"
+        },
+        "from_wallet_unique_id": {
+          "type": "string",
+          "description": "Account UID to pay from"
+        },
+        "to_wallet_unique_id": {
+          "type": "string",
+          "description": "Account UID to get to"
+        },
+        "codebase": {
+          "type": "string",
+          "description": "Base currency"
+        },
+        "codequote": {
+          "type": "string",
+          "description": "Quoted currency"
+        },
+        "triggered_by": {
+          "type": "string",
+          "description": "Original order UID if current order was triggered by SL/TP"
+        },
+        "num_childs": {
+          "type": "string",
+          "description": "Count for triggered orders"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount to execute"
+        },
+        "amount_initial": {
+          "type": "string",
+          "description": "Order amount"
+        },
+        "metadata": {
+          "type": "string",
+          "description": "Order details"
+        }
+      }
+    },
+    "TradeOrderDetail": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Order UID"
+        },
+        "type": {
+          "type": "integer",
+          "description": "Order type (0 - market, 2 - limit)"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Order status"
+        },
+        "direction": {
+          "type": "boolean",
+          "description": "Direction for base pair curency (0 - buy base currency, 1 - sell base currency)",
+          "enum": [0, 1]
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "Order UID"
+        },
+        "exchrate": {
+          "type": "number",
+          "description": "Exchange rate"
+        },
+        "exchrateclose": {
+          "type": "string",
+          "description": "Average close exchange rate"
+        },
+        "exchratemin": {
+          "type": "number",
+          "description": "Min exchange rate for order"
+        },
+        "exchratemax": {
+          "type": "number",
+          "description": "Max exchage rate for order"
+        },
+        "time_create": {
+          "type": "string",
+          "description": "Create date and time"
+        },
+        "time_update": {
+          "type": "string",
+          "description": "Update date and time"
+        },
+        "sl": {
+          "type": "number",
+          "description": "Stop loss rate"
+        },
+        "tp": {
+          "type": "number",
+          "description": "Take profit rate"
+        },
+        "code": {
+          "type": "string",
+          "description": "Currency pair code"
+        },
+        "codeget": {
+          "type": "string",
+          "description": "Currency to get"
+        },
+        "codepay": {
+          "type": "string",
+          "description": "Currency to pay"
+        },
+        "get": {
+          "type": "number",
+          "description": "Amount to get"
+        },
+        "pay": {
+          "type": "number",
+          "description": "Amount to pay"
+        },
+        "from_wallet_unique_id": {
+          "type": "string",
+          "description": "Account UID to pay from"
+        },
+        "to_wallet_unique_id": {
+          "type": "string",
+          "description": "Account UID to get to"
+        },
+        "codebase": {
+          "type": "string",
+          "description": "Base currency"
+        },
+        "codequote": {
+          "type": "string",
+          "description": "Quoted currency"
+        },
+        "triggered_by": {
+          "type": "string",
+          "description": "Original order UID if current order was triggered by SL/TP"
+        },
+        "num_childs": {
+          "type": "string",
+          "description": "Count for triggered orders"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount to execute"
+        },
+        "amount_initial": {
+          "type": "string",
+          "description": "Order amount"
+        },
+        "commission": {
+          "type": "number",
+          "description": "Order fdee"
+        },
+        "commission_initial": {
+          "type": "number",
+          "description": "Estimated fee at order creation"
+        },
+        "amount_open": {
+          "type": "number",
+          "description": "Amount on order creation"
+        },
+        "amount_close": {
+          "type": "number",
+          "description": "Amount on order close"
+        },
+        "commission_open": {
+          "type": "number",
+          "description": "Fee on order creation"
+        },
+        "commission_close": {
+          "type": "number",
+          "description": "Fee on order close"
+        },
+        "transaction_fee": {
+          "type": "number",
+          "description": "Fixed fee for order (obsolete)"
+        },
+        "total_pay_open": {
+          "type": "number",
+          "description": "Total amount to pay on order creation"
+        },
+        "total_pay_close": {
+          "type": "number",
+          "description": "Total amount to pay on order close"
+        },
+        "total_get_open": {
+          "type": "number",
+          "description": "Total amount to get on order creation"
+        },
+        "total_get_close": {
+          "type": "number",
+          "description": "Total amount to get on order close"
+        },
+        "get_close": {
+          "type": "number",
+          "description": "Total amount got on order close"
+        },
+        "pay_close": {
+          "type": "number",
+          "description": "Total amount paid on order close"
+        },
+        "metadata": {
+          "type": "string",
+          "description": "Order details"
+        },
+        "comistype": {
+          "type": "boolean",
+          "description": "Fee type"
+        },
+        "codecomis": {
+          "type": "string",
+          "description": "Fee currency"
+        }
+      }
+    },
+    "TradeOrderHistory": {
+      "properties": {
+        "unique_id": {
+          "type": "string",
+          "description": "Order UID"
+        },
+        "unique_id_corr": {
+          "type": "string",
+          "description": "Order UID"
+        },
+        "time_update": {
+          "type": "string",
+          "description": "Update date"
+        },
+        "exchrate": {
+          "type": "number",
+          "description": "Exchange rate"
+        },
+        "type": {
+          "type": "integer",
+          "description": "Order type (0 - market, 2 - limit)"
+        },
+        "commission": {
+          "type": "number",
+          "description": "Fee"
+        },
+        "time_create": {
+          "type": "string",
+          "description": "Create date"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Status"
+        },
+        "pay": {
+          "type": "number",
+          "description": "Amount to pay"
+        },
+        "get": {
+          "type": "number",
+          "description": "Amount to get"
+        },
+        "codepay": {
+          "type": "string",
+          "description": "Currency to pay"
+        },
+        "codeget": {
+          "type": "string",
+          "description": "Currency to get"
+        }
+      }
+    },
+    "TradeParams": {
+      "required": ["base", "counter", "fromUserAccount", "toUserAccount", "type", "direction" ],
+      "properties": {
+        "active": {
+          "type": "string",
+          "description": "",
+          "enum": ["pay", "get"]
+        },
+        "base": {
+          "type": "string",
+          "description": "Base currency"
+        },
+        "counter": {
+          "type": "string",
+          "description": "Quote currency"
+        },
+        "direction": {
+          "type": "integer",
+          "description": "Direction for base pair curency (0 - buy base currency, 1 - sell base currency)",
+          "enum": [0, 1]
+        },
+        "exchangeRate": {
+          "type": "number",
+          "format": "double",
+          "description": "Exchange rate"
+        },
+        "fromUserAccount": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account UID"
+        },
+        "get": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount to get"
+        },
+        "pay": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount to pay"
+        },
+        "payAll": {
+          "type": "integer",
+          "description": "Pay all available amount (0 - don't pay, 1 - pay all)",
+          "enum": [0, 1]
+        },
+        "stopLoss": {
+          "type": "number",
+          "format": "double",
+          "description": "Stop loss amount"
+        },
+        "takeProfit": {
+          "type": "number",
+          "format": "double",
+          "description": "Take profit amount"
+        },
+        "toUserAccount": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Account UID"
+        },
+        "type": {
+          "type": "integer",
+          "description": "Order type (0 - market, 2 - limit)",
+          "default": 2,
+          "enum": [0, 2]
+        }
+      }
+    },
+    "Transaction": {
+      "properties": {
+        "amount": {
+          "description": "amount",
+          "type": "number",
+          "format": "double"
+        },
+        "time_create": {
+          "description": "Time of creating",
+          "type": "integer"
+        },
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "params": {
+          "description": "Details",
+          "type": "object"
+        },
+        "currency": {
+          "description": "currency (EUR, USD, GBP)",
+          "type": "string",
+          "enum": ["EUR", "USD", "GBP"]
+        },
+        "type": {
+          "description": "Transaction type",
+          "type": "integer"
+        },
+        "direction": {
+          "description": "Direction of transaction (1=IN, 0=OUT)",
+          "type": "integer",
+          "enum": [0, 1]
+        },
+        "amount_sign": {
+          "description": "Signed amount",
+          "type": "number"
+        },
+        "commentfull": {
+          "description": "Comment",
+          "type": "string"
+        },
+        "initial_balance": {
+          "description": "Balance before transaction",
+          "type": "number"
+        },
+        "remaining_balance": {
+          "description": "Balance after transaction",
+          "type": "number"
+        },
+        "card_unique_id": {
+          "description": "Card UID if applicable",
+          "type": "string"
+        },
+        "wallet_id": {
+          "description": "Account UID",
+          "type": "string"
+        },
+        "wallet_name": {
+          "description": "Account name",
+          "type": "string"
+        }
+      }
+    },
+    "TransactionsFilter": {
+      "properties": {
+        "property1": {
+          "type": "string",
+          "description": "Standard filter"
+        }
+      }
+    },
+    "Transfer": {
+      "properties": {
+        "unique_id": {
+          "type": "string",
+          "description": "Transfer request unique ID"
+        },
+        "timestamp_created": {
+          "type": "integer",
+          "description": "Timestamp of creating"
+        },
+        "currency": {
+          "description": "Currency",
+          "type": "string",
+          "enum": ["EUR", "USD", "GBP", "BTC", "LTC", "RUB"]
+        },
+        "type": {
+          "description": "Treansfers type number (0 - My account, 1 - Another User)",
+          "type": "integer",
+          "enum": [0, 1]
+        },
+        "type_name": {
+          "description": "Transfers type name",
+          "type": "string",
+          "enum": ["My wallet", "Another User"]
+        },
+        "from": {
+          "type": "string",
+          "description": "User's source account name"
+        },
+        "to": {
+          "type": "string",
+          "description": "User's destination account name (type 0 or another user unique ID (type 1)"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount of transfer request"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount of commission"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Current status number (0 - Pending, 1 - Rejected, 2 - Confirmed, 3 - Cancelled, 4 - Completed, 5 - Failed, 6 - On Hold, 7 - New, 8 - Awaiting confirmation, 9 - Awaiting approval, 10 - Approved)",
+          "enum": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        },
+        "status_name": {
+          "type": "string",
+          "description": "Current status name",
+          "enum": ["Pending", "Rejected", "Confirmed", "Cancelled", "Completed", "Failed", "On Hold", "New", "Awaiting confirmation", "Awaiting approval", "Approved" ]
+        },
+        "currencycomis": {
+          "description": "Fee currency",
+          "type": "string",
+          "enum": ["EUR", "USD", "GBP", "BTC", "LTC", "RUB"]
+        }
+      }
+    },
+    "TransferFees": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Amount excl. fee"
+        },
+        "commission": {
+          "type": "number",
+          "description": "Fee amount"
+        },
+        "percent": {
+          "type": "number",
+          "description": "Variable fee (in percent)"
+        },
+        "fixed": {
+          "type": "number",
+          "description": "Fixed fee"
+        }
+      }
+    },
+    "TransferAmount": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Amount in currency to get"
+        },
+        "exchrateavg": {
+          "type": "number",
+          "description": "Avergae exchange rate"
+        },
+        "comis": {
+          "type": "number",
+          "description": "Fee"
+        },
+        "amountbase": {
+          "type": "number",
+          "description": "Amount in currency to pay"
+        },
+        "amountquote": {
+          "type": "number",
+          "description": "Amount in currency to get"
+        },
+        "amount_min": {
+          "type": "number",
+          "description": "Min amount to transfer"
+        },
+        "amount_max": {
+          "type": "number",
+          "description": "Max amount to transfer"
+        },
+        "bid": {
+          "type": "number",
+          "description": "Exchange rate"
+        },
+        "ask": {
+          "type": "number",
+          "description": "Exchange rate"
+        }
+      }
+    },
+
+    "UserBalance": {
+      "properties": {
+        "balance": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount"
+        },
+        "in_orders": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount in orders"
+        },
+        "available": {
+          "type": "number",
+          "format": "double",
+          "description": "Available amount (balance-in_orders)"
+        },
+        "type": {
+          "description": "Currency type",
+          "type": "string",
+          "enum": ["Crypto", "Fiat"]
+        },
+        "currency": {
+          "description": "Currency (EUR, USD, GBP)",
+          "type": "string",
+          "enum": ["EUR", "USD", "GBP"]
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "User's account UID"
+        },
+        "name": {
+          "type": "string",
+          "description": "User's account name"
+        }
+      }
+    },
+
+    "ValidationError": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Negative error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error description"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Params list as array field:error"
+        }
+      }
+    },
+
+    "Wallet": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Account name"
+        },
+        "balance": {
+          "type": "number",
+          "description": "Balance"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency"
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "Unique ID"
+        },
+        "crypto_address": {
+          "type": "string",
+          "description": "Crypto address"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Status"
+        },
+        "typecurrency": {
+          "type": "integer",
+          "description": "Currency type, 0 - crypto, 1 - fiat",
+          "enum": [0, 1]
+        },
+        "time_create": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Create date"
+        },
+        "currency_id": {
+          "type": "integer",
+          "description": "Currency ID"
+        },
+        "blocked": {
+          "type": "boolean",
+          "description": "blocked"
+        },
+        "norder": {
+          "type": "integer",
+          "description": "Priority in list"
+        },
+        "balanceconverted": {
+          "type": "string",
+          "description": "Balance"
+        },
+        "multisign": {
+          "type": "boolean",
+          "description": "Account type"
+        },
+        "multisigntype": {
+          "type": "integer",
+          "description": "Account type"
+        }
+      }
+    },
+    "WalletAll": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Account name"
+        },
+        "balance": {
+          "type": "number",
+          "description": "Balance"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency"
+        },
+        "unique_id": {
+          "type": "string",
+          "description": "Account UID"
+        },
+        "crypto_address": {
+          "type": "string",
+          "description": "Crypto address"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Status"
+        },
+        "typecurrency": {
+          "type": "integer",
+          "description": "Currency type, 0 - crypto, 1 - fiat",
+          "enum": [0, 1]
+        },
+        "time_create": {
+          "type": "string",
+          "format": "datetime",
+          "description": "Create date"
+        },
+        "currency_id": {
+          "type": "integer",
+          "description": "Currency ID"
+        },
+        "blocked": {
+          "type": "boolean",
+          "description": "blocked"
+        },
+        "norder": {
+          "type": "integer",
+          "description": "Priority in list"
+        },
+        "balanceconverted": {
+          "type": "string",
+          "description": "Balance"
+        },
+        "multisign": {
+          "type": "boolean",
+          "description": "Account type"
+        },
+        "multisigntype": {
+          "type": "integer",
+          "description": "Account type"
+        },
+        "shared": {
+          "type": "integer",
+          "description": "Shared account from another customers"
+        },
+        "owner_id": {
+          "type": "string",
+          "description": "Account owner UID"
+        },
+        "existsshare": {
+          "type": "boolean",
+          "description": "Account shared to other customers"
+        }
+      }
+    },
+    "Withdrawal": {
+      "properties": {
+        "unique_id": {
+          "type": "string",
+          "description": "Withdrawal request unique ID"
+        },
+        "time_create": {
+          "type": "integer",
+          "description": "Timestamp of creating"
+        },
+        "currency": {
+          "description": "Currency (BTC, LTC)",
+          "type": "string",
+          "enum": ["BTC", "LTC"]
+        },
+        "pscode": {
+          "description": "Payment system code",
+          "type": "string",
+          "enum": ["QWI"]
+        },
+        "amount": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount of withdrawal request"
+        },
+        "commission": {
+          "type": "number",
+          "format": "double",
+          "description": "Amount of commission"
+        },
+        "total": {
+          "type": "number",
+          "format": "double",
+          "description": "Total amount"
+        },
+        "status": {
+          "type": "integer",
+          "description": "Current status number (0=Pending, 1=Rejected, 2=Confirmed, 3=Cancelled, 4=Completed, 5=Failed, 6=On Hold, 7=New, 8=Awaiting confirmation, 9=Awaiting approval, 10=Approved)",
+          "enum": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        },
+        "address": {
+          "type": "string",
+          "description": "Crypto address of destination"
+        },
+        "confirmations": {
+          "type": "integer"
+        },
+        "min_confirmations": {
+          "type": "integer"
+        },
+        "txid": {
+          "type": "string"
+        },
+        "crypto_txid": {
+          "type": "string"
+        },
+        "urgent": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string",
+          "description": "some withdrawal code"
+        },
+        "usercomment": {
+          "type": "string"
+        },
+        "idchain": {
+          "type": "integer",
+          "description": "Internal ID"
+        },
+        "wallet_unique_id": {
+          "type": "string",
+          "description": "Account UID"
+        },
+        "wallet_name": {
+          "type": "string",
+          "description": "Account name"
+        },
+        "details": {
+          "type": "object",
+          "description": "Various details"
+        },
+        "action": {
+          "type": "object",
+          "description": "Possbile actions"
+        }
+      }
+    },
+    "WithdrawalFees": {
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Withdrawal amount excl. fee"
+        },
+        "amountTotal": {
+          "type": "number",
+          "description": "Withdrawal amount incl. fee"
+        },
+        "commission": {
+          "type": "number",
+          "description": "Fee"
+        },
+        "percent": {
+          "type": "number",
+          "description": "Variable fee (percent from original amount)"
+        },
+        "fixed": {
+          "type": "number",
+          "description": "Fixed fee"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency"
+        }
+      }
+    }
+  }
+}

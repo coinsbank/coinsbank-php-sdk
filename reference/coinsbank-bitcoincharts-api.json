@@ -1,0 +1,182 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Coinsbank Bitcoincharts API",
+    "description": "Alphabetical list of common-used methods for trades data",
+    "version": "0.2"
+  },
+  "host": "coinsbank.com",
+  "schemes": [
+    "https"
+  ],
+  "basePath": "/api",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "responses": {
+    "200": {
+      "description": "Operation was successful"
+    },
+    "412": {
+      "description": "Validation error",
+      "schema": {
+        "$ref": "#/definitions/ValidationError"
+      }
+    },
+    "429": {
+      "description": "Too many requests",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    },
+    "500": {
+      "description": "General error",
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    }
+  },
+
+  "paths": {
+    "/bitcoincharts/trades/{currencyPair}": {
+      "get": {
+        "description": "Get active trade orders",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Max numbers of records",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trade orders history",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tid": {
+                    "type": "integer",
+                    "description": "id chain"
+                  },
+                  "date": {
+                    "type": "integer",
+                    "description": "timestamp"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "order amount"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "order price"
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "order direction",
+                    "enum": ["ask", "bid"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bitcoincharts/orderbook/{currencyPair}": {
+      "get": {
+        "description": "Get orderbook",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Max numbers of records",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Orderbook",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "bids": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "description": "0 - rate, 1 - amount, 2 - order id",
+                      "type": "number"
+                    }
+                  }
+                },
+                "asks": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AuthorizationError": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Negative error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error description"
+        }
+      }
+    },
+    "Error": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Negative error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error description"
+        }
+      }
+    },
+    "ValidationError": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Negative error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error description"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Params list as array field:error"
+        }
+      }
+    }
+  }
+}
