@@ -4,7 +4,7 @@
  *
  * 1. Get package with Composer
  * 2. Run php composer.phar dump-autoload -o
- * 3. Register and get API keys on https://devsys.coinsbank.com
+ * 3. Register and get API keys on https://app.master.coinsbank.integration.cbdev.me/
  * 4. Paste key and secret to corresponding variables
  * 5. Uncomment code
  *

@@ -2,7 +2,7 @@
 
 # THIS SCRIPT WORKS WITH STAGING SERVER
 
-# Before using enable Merchant Services and create API keys on Sandbox site https://devsys.coinsbank.com/app
+# Before using enable Merchant Services and create API keys on Sandbox site https://app.master.coinsbank.integration.cbdev.me/
 key=""
 secret=""
 
@@ -35,7 +35,7 @@ emailurl=$(echo -n $email | sed -e 's/\@/%40/g')
 
 
 # No need to change the following code
-sandboxUrl="https://devsys.coinsbank.com/sapi"
+sandboxUrl="https://api.master.coinsbank.integration.cbdev.me/"
 method="merchant"
 type="POST"
 
