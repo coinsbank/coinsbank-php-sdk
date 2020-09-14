@@ -28,7 +28,7 @@ class CoinsbankSapi extends Coinsbank
                 $uri = CoinsbankRest::REST_SAPI_URI;
                 break;
         }
-
+        $uri = trim($uri, '/');
         return $uri;
     }
 

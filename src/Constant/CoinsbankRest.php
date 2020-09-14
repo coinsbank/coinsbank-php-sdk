@@ -23,6 +23,6 @@ class CoinsbankRest
     const REST_SAPI_URI = "https://coinsbank.com/sapi";
     const REST_API_URI = "https://coinsbank.com/api";
 
-    const REST_SAPI_SANDBOX_URI = "https://api.master.coinsbank.integration.cbdev.me/";
-    const REST_API_SANDBOX_URI = "https://api.master.coinsbank.integration.cbdev.me/";
+    const REST_SAPI_SANDBOX_URI = "https://api.master.coinsbank.integration.cbdev.me";
+    const REST_API_SANDBOX_URI = "https://api.master.coinsbank.integration.cbdev.me";
 }
